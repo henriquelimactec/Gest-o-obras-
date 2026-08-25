@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Gestão de Obras</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.hidden{display:none!important}
+
+/* LOGIN */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:#1e293b;border-radius:16px;padding:32px 28px;width:100%;max-width:380px;border:1px solid #334155}
+.login-box h1{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px;text-align:center}
+.login-box p{font-size:13px;color:#64748b;text-align:center;margin-bottom:28px}
+.login-logo{text-align:center;font-size:48px;margin-bottom:16px}
+.inp{width:100%;padding:12px 14px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;font-size:15px;color:#e2e8f0;margin-bottom:12px}
+.inp:focus{outline:none;border-color:#3b82f6}
+.btn-login{width:100%;padding:13px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
+.btn-login:active{opacity:.85}
+.login-err{color:#f87171;font-size:12px;text-align:center;margin-top:8px}
+
+/* APP LAYOUT */
+#app{display:none;min-height:100vh;flex-direction:column}
+#app.visible{display:flex}
+
+/* TOPBAR */
+.topbar{background:#1e293b;border-bottom:1px solid #334155;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:30}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-left h1{font-size:15px;font-weight:700;color:#fff}
+.topbar-left .badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700}
+.badge-sup{background:#1e3a5f;color:#60a5fa}
+.badge-enc{background:#14532d;color:#4ade80}
+.badge-mot{background:#44403c;color:#fbbf24}
+.badge-apt{background:#3b0764;color:#c084fc}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.user-info{font-size:11px;color:#64748b;text-align:right}
+.btn-logout{background:none;border:1px solid #334155;color:#94a3b8;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer}
+
+/* NAV */
+.nav{background:#1e293b;border-bottom:1px solid #334155;display:flex;overflow-x:auto;flex-shrink:0}
+.nav-btn{padding:12px 16px;background:none;border:none;color:#64748b;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;flex-shrink:0}
+.nav-btn.active{color:#3b82f6;border-bottom-color:#3b82f6}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:16px}
+
+/* CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.kpi{background:#1e293b;border-radius:10px;padding:14px;border:1px solid #334155}
+.kpi .lbl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.kpi .val{font-size:22px;font-weight:700;color:#fff}
+.kpi .sub{font-size:11px;color:#64748b;margin-top:3px}
+
+/* SECTION */
+.section{background:#1e293b;border-radius:12px;border:1px solid #334155;margin-bottom:16px;overflow:hidden}
+.section-hdr{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #334155}
+.section-hdr h2{font-size:14px;font-weight:700;color:#fff}
+.section-body{padding:16px}
+
+/* FORM */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;font-size:14px;color:#e2e8f0;-webkit-appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#3b82f6}
+.field textarea{resize:vertical;min-height:80px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+/* BUTTONS */
+.btn{padding:10px 18px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-blue{background:#3b82f6;color:#fff}
+.btn-green{background:#10b981;color:#fff}
+.btn-red{background:#ef4444;color:#fff}
+.btn-gray{background:#334155;color:#e2e8f0}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn:active{opacity:.85}
+
+/* LIST ITEMS */
+.list-item{background:#0f172a;border-radius:8px;padding:12px 14px;margin-bottom:8px;border:1px solid #1e3a5f;display:flex;justify-content:space-between;align-items:flex-start}
+.li-info h3{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px}
+.li-info p{font-size:11px;color:#64748b;line-height:1.7}
+.li-actions{display:flex;gap:6px;flex-shrink:0;margin-left:10px}
+
+/* BADGE STATUS */
+.status{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;display:inline-block;margin-top:4px}
+.s-ativo{background:#14532d;color:#4ade80}
+.s-inativo{background:#44403c;color:#fbbf24}
+.s-manut{background:#7c2d12;color:#fb923c}
+
+/* TABS dentro de seção */
+.inner-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.itab{padding:7px 14px;border:1px solid #334155;border-radius:8px;background:#0f172a;font-size:12px;font-weight:700;color:#64748b;cursor:pointer}
+.itab.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#3b82f6;color:#fff;padding:10px 22px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99;white-space:nowrap}
+.toast.show{opacity:1}
+.toast.ok{background:#10b981}
+.toast.err{background:#ef4444}
+
+/* SPINNER */
+.spinner-wrap{text-align:center;padding:30px;color:#64748b}
+.spin{display:inline-block;width:24px;height:24px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.empty{text-align:center;padding:30px;color:#475569;font-size:13px}
+.divider{height:1px;background:#334155;margin:14px 0}
+.chip{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;background:#1e3a5f;color:#60a5fa;display:inline-block;margin-right:4px;margin-top:2px}
+
+option{background:#1e293b;color:#e2e8f0}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🏗</div>
+    <h1>Gestão de Obras</h1>
+    <p>Entre com sua conta para acessar o sistema</p>
+    <input class="inp" type="email" id="l-email" placeholder="E-mail">
+    <input class="inp" type="password" id="l-senha" placeholder="Senha">
+    <button class="btn-login" onclick="fazerLogin()">Entrar</button>
+    <div class="login-err" id="l-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span style="font-size:20px">🏗</span>
+      <h1>Gestão de Obras</h1>
+      <span class="badge badge-sup" id="perfil-badge">SUPERVISOR</span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-info" id="user-info"></div>
+      <button class="btn-logout" onclick="fazerLogout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="nav" id="nav-bar">
+    <button class="nav-btn active" onclick="showMod('dashboard')">📊 Dashboard</button>
+    <button class="nav-btn" onclick="showMod('obras')">🏗 Obras</button>
+    <button class="nav-btn" onclick="showMod('funcionarios')">👷 Equipe</button>
+    <button class="nav-btn" onclick="showMod('veiculos')">🚛 Veículos</button>
+    <button class="nav-btn" onclick="showMod('maquinas')">⚙️ Máquinas</button>
+  </div>
+
+  <div class="content" id="content"></div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDw8gbZsMwdofq7NrLEVvWd0qAuVp2Jip4",
+  authDomain: "gestao-8149c.firebaseapp.com",
+  projectId: "gestao-8149c",
+  storageBucket: "gestao-8149c.firebasestorage.app",
+  messagingSenderId: "771236890796",
+  appId: "1:771236890796:web:2341c3e498eb9fe23b7709"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let userAtual = null;
+let modAtual = 'dashboard';
+
+// ── UTILS ──
+function fmt(n){return parseFloat(n||0).toFixed(2).replace('.',',');}
+function toast(msg,t=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast '+(t?t+' ':'')+'show';
+  setTimeout(()=>el.classList.remove('show'),2500);
+}
+function spin(){return `<div class="spinner-wrap"><div class="spin"></div><br><br>Carregando...</div>`;}
+function empty(msg){return `<div class="empty">📭 ${msg}</div>`;}
+
+// ── AUTH ──
+window.fazerLogin = async function(){
+  const email = document.getElementById('l-email').value;
+  const senha = document.getElementById('l-senha').value;
+  document.getElementById('l-err').textContent = '';
+  try {
+    await signInWithEmailAndPassword(auth, email, senha);
+  } catch(e) {
+    document.getElementById('l-err').textContent = 'E-mail ou senha incorretos.';
+  }
+};
+
+window.fazerLogout = async function(){
+  await signOut(auth);
+};
+
+onAuthStateChanged(auth, user => {
+  if(user) {
+    userAtual = user;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('user-info').textContent = user.email;
+    showMod('dashboard');
+  } else {
+    userAtual = null;
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').classList.remove('visible');
+  }
+});
+
+// ── NAV ──
+window.showMod = function(mod){
+  modAtual = mod;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const btns = document.querySelectorAll('.nav-btn');
+  const mods = ['dashboard','obras','funcionarios','veiculos','maquinas'];
+  const idx = mods.indexOf(mod);
+  if(idx >= 0) btns[idx].classList.add('active');
+  const fns = {dashboard:renderDashboard, obras:renderObras, funcionarios:renderFuncionarios, veiculos:renderVeiculos, maquinas:renderMaquinas};
+  if(fns[mod]) fns[mod]();
+};
+
+// ══════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════
+async function renderDashboard(){
+  const ct = document.getElementById('content');
+  ct.innerHTML = spin();
+  try {
+    const [obras, funcs, veics, maquinas] = await Promise.all([
+      getDocs(collection(db,'obras')),
+      getDocs(collection(db,'funcionarios')),
+      getDocs(collection(db,'veiculos')),
+      getDocs(collection(db,'maquinas'))
+    ]);
+    const obrasAtivas = obras.docs.filter(d=>d.data().status==='ativo').length;
+    const funcsAtivos = funcs.docs.filter(d=>d.data().ativo).length;
+    const veicsAtivos = veics.docs.filter(d=>d.data().status==='ativo').length;
+    const manutPend = maquinas.docs.filter(d=>d.data().manutencao_pendente).length;
+
+    ct.innerHTML = `
+      <div style="margin-bottom:6px;font-size:12px;color:#64748b">
+        Bem-vindo! Hoje é ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="lbl">Obras ativas</div><div class="val">${obrasAtivas}</div><div class="sub">de ${obras.size} cadastradas</div></div>
+        <div class="kpi"><div class="lbl">Equipe ativa</div><div class="val">${funcsAtivos}</div><div class="sub">funcionários</div></div>
+        <div class="kpi"><div class="lbl">Veículos</div><div class="val">${veicsAtivos}</div><div class="sub">em operação</div></div>
+        <div class="kpi"><div class="lbl">Manutenções</div><div class="val" style="color:${manutPend>0?'#f87171':'#4ade80'}">${manutPend}</div><div class="sub">pendentes</div></div>
+      </div>
+
+      <div class="section">
+        <div class="section-hdr"><h2>🏗 Obras cadastradas</h2><button class="btn btn-blue btn-sm" onclick="showMod('obras')">Ver todas</button></div>
+        <div class="section-body">
+          ${obras.size===0 ? empty('Nenhuma obra cadastrada') : obras.docs.slice(0,4).map(d=>{
+            const o=d.data();
+            return `<div class="list-item">
+              <div class="li-info">
+                <h3>${o.nome}</h3>
+                <p>${o.tipo||'—'} · ${o.local||'—'}</p>
+                <span class="status ${o.status==='ativo'?'s-ativo':'s-inativo'}">${o.status==='ativo'?'Ativa':'Inativa'}</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-hdr"><h2>👷 Equipe recente</h2><button class="btn btn-blue btn-sm" onclick="showMod('funcionarios')">Ver todos</button></div>
+        <div class="section-body">
+          ${funcs.size===0 ? empty('Nenhum funcionário cadastrado') : funcs.docs.slice(0,4).map(d=>{
+            const f=d.data();
+            return `<div class="list-item">
+              <div class="li-info">
+                <h3>${f.nome}</h3>
+                <p>${f.funcao||'—'} · R$ ${fmt(f.diaria)}/dia</p>
+                <span class="status ${f.ativo?'s-ativo':'s-inativo'}">${f.ativo?'Ativo':'Inativo'}</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  } catch(e) {
+    ct.innerHTML = `<div class="empty">Erro ao carregar dados: ${e.message}</div>`;
+  }
+}
+
+// ══════════════════════════════════════
+// OBRAS
+// ══════════════════════════════════════
+async function renderObras(){
+  const ct = document.getElementById('content');
+  ct.innerHTML = spin();
+  const snap = await getDocs(query(collection(db,'obras'), orderBy('criadoEm','desc')));
+
+  ct.innerHTML = `
+    <div class="section">
+      <div class="section-hdr"><h2>🏗 Cadastro de Obras</h2></div>
+      <div class="section-body">
+        <div class="row2">
+          <div class="field"><label>Nome da obra</label><input id="o-nome" placeholder="Ex: Recape Praça STA Teresinha"></div>
+          <div class="field"><label>Tipo de serviço</label>
+            <select id="o-tipo">
+              <option value="">Selecione...</option>
+              <option>Recapeamento</option>
+              <option>Tapa-buraco</option>
+              <option>Terraplanagem</option>
+              <option>Múltiplos serviços</option>
+            </select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Localização / Bairro</label><input id="o-local" placeholder="Ex: Centro, Bacabal"></div>
+          <div class="field"><label>Responsável</label><input id="o-resp" placeholder="Nome do encarregado"></div>
+        </div>
+        <div class="field"><label>Observação</label><textarea id="o-obs" placeholder="Detalhes da obra..."></textarea></div>
+        <button class="btn btn-green" onclick="salvarObra()">+ Cadastrar obra</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-hdr"><h2>Lista de obras (${snap.size})</h2></div>
+      <div class="section-body" id="lista-obras">
+        ${snap.size===0 ? empty('Nenhuma obra cadastrada') : snap.docs.map(d=>{
+          const o=d.data();
+          return `<div class="list-item">
+            <div class="li-info">
+              <h3>${o.nome}</h3>
+              <p>${o.tipo||'—'} · ${o.local||'—'}<br>Resp: ${o.resp||'—'}</p>
+              ${o.obs?`<p style="margin-top:4px;color:#94a3b8">${o.obs}</p>`:''}
+              <span class="status ${o.status==='ativo'?'s-ativo':'s-inativo'}">${o.status==='ativo'?'Ativa':'Inativa'}</span>
+            </div>
+            <div class="li-actions">
+              <button class="btn btn-gray btn-sm" onclick="toggleObra('${d.id}','${o.status}')">${o.status==='ativo'?'Desativar':'Ativar'}</button>
+              <button class="btn btn-red btn-sm" onclick="deletarDoc('obras','${d.id}','obras')">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+window.salvarObra = async function(){
+  const nome = document.getElementById('o-nome').value.trim();
+  if(!nome){toast('Informe o nome da obra','err');return;}
+  try {
+    await addDoc(collection(db,'obras'),{
+      nome, tipo: document.getElementById('o-tipo').value,
+      local: document.getElementById('o-local').value,
+      resp: document.getElementById('o-resp').value,
+      obs: document.getElementById('o-obs').value,
+      status:'ativo', criadoEm: serverTimestamp()
+    });
+    toast('Obra cadastrada ✓','ok');
+    renderObras();
+  } catch(e){toast('Erro: '+e.message,'err');}
+};
+
+window.toggleObra = async function(id, status){
+  await updateDoc(doc(db,'obras',id),{status: status==='ativo'?'inativo':'ativo'});
+  toast('Status atualizado','ok');
+  renderObras();
+};
+
+// ══════════════════════════════════════
+// FUNCIONÁRIOS
+// ══════════════════════════════════════
+async function renderFuncionarios(){
+  const ct = document.getElementById('content');
+  ct.innerHTML = spin();
+  const snap = await getDocs(query(collection(db,'funcionarios'), orderBy('nome')));
+
+  ct.innerHTML = `
+    <div class="section">
+      <div class="section-hdr"><h2>👷 Cadastro de Funcionários</h2></div>
+      <div class="section-body">
+        <div class="row2">
+          <div class="field"><label>Nome completo</label><input id="f-nome" placeholder="Nome do funcionário"></div>
+          <div class="field"><label>Função / Cargo</label>
+            <select id="f-func">
+              <option value="">Selecione...</option>
+              <option>Ajudante</option>
+              <option>Rasteleiro</option>
+              <option>Operador</option>
+              <option>Motorista</option>
+              <option>Encarregado</option>
+              <option>Apontador</option>
+              <option>Engenheiro</option>
+            </select>
+          </div>
+        </div>
+        <div class="row3">
+          <div class="field"><label>Diária (R$)</label><input id="f-diaria" type="number" placeholder="0,00" step="0.01" inputmode="decimal"></div>
+          <div class="field"><label>Chave PIX</label><input id="f-pix" placeholder="CPF, tel ou e-mail"></div>
+          <div class="field"><label>Banco / Credor</label><input id="f-banco" placeholder="Ex: Inter, 4596"></div>
+        </div>
+        <button class="btn btn-green" onclick="salvarFuncionario()">+ Cadastrar funcionário</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-hdr"><h2>Lista de funcionários (${snap.size})</h2></div>
+      <div class="section-body">
+        ${snap.size===0 ? empty('Nenhum funcionário cadastrado') : snap.docs.map(d=>{
+          const f=d.data();
+          return `<div class="list-item">
+            <div class="li-info">
+              <h3>${f.nome}</h3>
+              <p>${f.funcao||'—'} · R$ ${fmt(f.diaria)}/dia</p>
+              <p>PIX: ${f.pix||'—'} · ${f.banco||'—'}</p>
+              <span class="status ${f.ativo?'s-ativo':'s-inativo'}">${f.ativo?'Ativo':'Inativo'}</span>
+            </div>
+            <div class="li-actions">
+              <button class="btn btn-gray btn-sm" onclick="toggleFunc('${d.id}',${f.ativo})">${f.ativo?'Desativar':'Ativar'}</button>
+              <button class="btn btn-red btn-sm" onclick="deletarDoc('funcionarios','${d.id}','funcionarios')">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+window.salvarFuncionario = async function(){
+  const nome = document.getElementById('f-nome').value.trim();
+  if(!nome){toast('Informe o nome','err');return;}
+  try {
+    await addDoc(collection(db,'funcionarios'),{
+      nome, funcao: document.getElementById('f-func').value,
+      diaria: parseFloat(document.getElementById('f-diaria').value)||0,
+      pix: document.getElementById('f-pix').value,
+      banco: document.getElementById('f-banco').value,
+      ativo: true, criadoEm: serverTimestamp()
+    });
+    toast('Funcionário cadastrado ✓','ok');
+    renderFuncionarios();
+  } catch(e){toast('Erro: '+e.message,'err');}
+};
+
+window.toggleFunc = async function(id, ativo){
+  await updateDoc(doc(db,'funcionarios',id),{ativo: !ativo});
+  toast('Status atualizado','ok');
+  renderFuncionarios();
+};
+
+// ══════════════════════════════════════
+// VEÍCULOS
+// ══════════════════════════════════════
+async function renderVeiculos(){
+  const ct = document.getElementById('content');
+  ct.innerHTML = spin();
+  const snap = await getDocs(query(collection(db,'veiculos'), orderBy('placa')));
+
+  ct.innerHTML = `
+    <div class="section">
+      <div class="section-hdr"><h2>🚛 Cadastro de Veículos</h2></div>
+      <div class="section-body">
+        <div class="row3">
+          <div class="field"><label>Placa</label><input id="v-placa" placeholder="ABC-1234" style="text-transform:uppercase"></div>
+          <div class="field"><label>Modelo</label><input id="v-modelo" placeholder="Ex: Caminhão Mercedes"></div>
+          <div class="field"><label>Tipo</label>
+            <select id="v-tipo">
+              <option value="">Selecione...</option>
+              <option>Caminhão caçamba</option>
+              <option>Caminhão pipa</option>
+              <option>Caminhonete</option>
+              <option>Van</option>
+              <option>Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="row3">
+          <div class="field"><label>Motorista responsável</label><input id="v-motorista" placeholder="Nome do motorista"></div>
+          <div class="field"><label>KM atual</label><input id="v-km" type="number" placeholder="0" inputmode="numeric"></div>
+          <div class="field"><label>Obra vinculada</label><input id="v-obra" placeholder="Nome da obra"></div>
+        </div>
+        <button class="btn btn-green" onclick="salvarVeiculo()">+ Cadastrar veículo</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-hdr"><h2>Lista de veículos (${snap.size})</h2></div>
+      <div class="section-body">
+        ${snap.size===0 ? empty('Nenhum veículo cadastrado') : snap.docs.map(d=>{
+          const v=d.data();
+          return `<div class="list-item">
+            <div class="li-info">
+              <h3>${v.placa} — ${v.modelo||'—'}</h3>
+              <p>${v.tipo||'—'} · Motorista: ${v.motorista||'—'}</p>
+              <p>KM: ${v.km||0} · Obra: ${v.obra||'—'}</p>
+              <span class="status ${v.status==='ativo'?'s-ativo':v.status==='manutencao'?'s-manut':'s-inativo'}">
+                ${v.status==='ativo'?'Ativo':v.status==='manutencao'?'Em manutenção':'Inativo'}
+              </span>
+            </div>
+            <div class="li-actions">
+              <button class="btn btn-red btn-sm" onclick="deletarDoc('veiculos','${d.id}','veiculos')">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+window.salvarVeiculo = async function(){
+  const placa = document.getElementById('v-placa').value.trim().toUpperCase();
+  if(!placa){toast('Informe a placa','err');return;}
+  try {
+    await addDoc(collection(db,'veiculos'),{
+      placa, modelo: document.getElementById('v-modelo').value,
+      tipo: document.getElementById('v-tipo').value,
+      motorista: document.getElementById('v-motorista').value,
+      km: parseInt(document.getElementById('v-km').value)||0,
+      obra: document.getElementById('v-obra').value,
+      status:'ativo', criadoEm: serverTimestamp()
+    });
+    toast('Veículo cadastrado ✓','ok');
+    renderVeiculos();
+  } catch(e){toast('Erro: '+e.message,'err');}
+};
+
+// ══════════════════════════════════════
+// MÁQUINAS
+// ══════════════════════════════════════
+async function renderMaquinas(){
+  const ct = document.getElementById('content');
+  ct.innerHTML = spin();
+  const snap = await getDocs(query(collection(db,'maquinas'), orderBy('nome')));
+
+  ct.innerHTML = `
+    <div class="section">
+      <div class="section-hdr"><h2>⚙️ Cadastro de Máquinas</h2></div>
+      <div class="section-body">
+        <div class="row2">
+          <div class="field"><label>Nome / Identificação</label><input id="m-nome" placeholder="Ex: Rolo compactador 01"></div>
+          <div class="field"><label>Tipo</label>
+            <select id="m-tipo">
+              <option value="">Selecione...</option>
+              <option>Rolo compactador</option>
+              <option>Motoniveladora</option>
+              <option>Escavadeira</option>
+              <option>Pá carregadeira</option>
+              <option>Vibroacabadora</option>
+              <option>Caminhão munck</option>
+              <option>Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="row3">
+          <div class="field"><label>Operador responsável</label><input id="m-op" placeholder="Nome do operador"></div>
+          <div class="field"><label>Horímetro atual (h)</label><input id="m-hor" type="number" placeholder="0" inputmode="numeric"></div>
+          <div class="field"><label>Próxima manutenção (h)</label><input id="m-prox" type="number" placeholder="0" inputmode="numeric"></div>
+        </div>
+        <div class="field"><label>Obra vinculada</label><input id="m-obra" placeholder="Nome da obra"></div>
+        <button class="btn btn-green" onclick="salvarMaquina()">+ Cadastrar máquina</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-hdr"><h2>Lista de máquinas (${snap.size})</h2></div>
+      <div class="section-body">
+        ${snap.size===0 ? empty('Nenhuma máquina cadastrada') : snap.docs.map(d=>{
+          const m=d.data();
+          const pendente = m.prox_manutencao && m.horimetro >= m.prox_manutencao;
+          return `<div class="list-item">
+            <div class="li-info">
+              <h3>${m.nome}</h3>
+              <p>${m.tipo||'—'} · Operador: ${m.operador||'—'}</p>
+              <p>Horímetro: ${m.horimetro||0}h · Próx. manutenção: ${m.prox_manutencao||'—'}h</p>
+              <p>Obra: ${m.obra||'—'}</p>
+              ${pendente?'<span class="status s-manut">⚠ Manutenção pendente</span>':'<span class="status s-ativo">OK</span>'}
+            </div>
+            <div class="li-actions">
+              <button class="btn btn-red btn-sm" onclick="deletarDoc('maquinas','${d.id}','maquinas')">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+window.salvarMaquina = async function(){
+  const nome = document.getElementById('m-nome').value.trim();
+  if(!nome){toast('Informe o nome da máquina','err');return;}
+  const hor = parseInt(document.getElementById('m-hor').value)||0;
+  const prox = parseInt(document.getElementById('m-prox').value)||0;
+  try {
+    await addDoc(collection(db,'maquinas'),{
+      nome, tipo: document.getElementById('m-tipo').value,
+      operador: document.getElementById('m-op').value,
+      horimetro: hor, prox_manutencao: prox,
+      obra: document.getElementById('m-obra').value,
+      manutencao_pendente: prox>0 && hor>=prox,
+      status:'ativo', criadoEm: serverTimestamp()
+    });
+    toast('Máquina cadastrada ✓','ok');
+    renderMaquinas();
+  } catch(e){toast('Erro: '+e.message,'err');}
+};
+
+// ── DELETAR GENÉRICO ──
+window.deletarDoc = async function(col, id, mod){
+  if(!confirm('Confirma exclusão?')) return;
+  try {
+    await deleteDoc(doc(db, col, id));
+    toast('Removido ✓','ok');
+    window.showMod(mod);
+  } catch(e){toast('Erro: '+e.message,'err');}
+};
+
+</script>
+</body>
+</html>
