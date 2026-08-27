@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Gestão de Obras</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:#1e293b;border-radius:16px;padding:32px 28px;width:100%;max-width:380px;border:1px solid #334155}
+.login-box h1{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px;text-align:center}
+.login-box p{font-size:13px;color:#64748b;text-align:center;margin-bottom:28px}
+.login-logo{text-align:center;font-size:48px;margin-bottom:16px}
+.inp{width:100%;padding:12px 14px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;font-size:15px;color:#e2e8f0;margin-bottom:12px}
+.inp:focus{outline:none;border-color:#3b82f6}
+.btn-login{width:100%;padding:13px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
+.login-err{color:#f87171;font-size:12px;text-align:center;margin-top:8px}
+#app{display:none;min-height:100vh;flex-direction:column}
+#app.visible{display:flex}
+.topbar{background:#1e293b;border-bottom:1px solid #334155;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:30}
+.topbar h1{font-size:15px;font-weight:700;color:#fff}
+.badge-sup{background:#1e3a5f;color:#60a5fa;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700}
+.btn-logout{background:none;border:1px solid #334155;color:#94a3b8;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer}
+.nav{background:#1e293b;border-bottom:1px solid #334155;display:flex;overflow-x:auto;flex-shrink:0}
+.nav-btn{padding:12px 14px;background:none;border:none;color:#64748b;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;flex-shrink:0}
+.nav-btn.active{color:#3b82f6;border-bottom-color:#3b82f6}
+.content{flex:1;overflow-y:auto;padding:16px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.kpi{background:#1e293b;border-radius:10px;padding:14px;border:1px solid #334155}
+.kpi .lbl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.kpi .val{font-size:22px;font-weight:700;color:#fff}
+.kpi .sub{font-size:11px;color:#64748b;margin-top:3px}
+.section{background:#1e293b;border-radius:12px;border:1px solid #334155;margin-bottom:16px;overflow:hidden}
+.section-hdr{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #334155}
+.section-hdr h2{font-size:14px;font-weight:700;color:#fff}
+.section-body{padding:16px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;font-size:14px;color:#e2e8f0;-webkit-appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#3b82f6}
+.field textarea{resize:vertical;min-height:70px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.btn{padding:10px 18px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-blue{background:#3b82f6;color:#fff}
+.btn-green{background:#10b981;color:#fff}
+.btn-red{background:#ef4444;color:#fff}
+.btn-gray{background:#334155;color:#e2e8f0}
+.btn-orange{background:#f59e0b;color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn:active{opacity:.85}
+.list-item{background:#0f172a;border-radius:8px;padding:12px 14px;margin-bottom:8px;border:1px solid #1e3a5f;display:flex;justify-content:space-between;align-items:flex-start}
+.li-info h3{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px}
+.li-info p{font-size:11px;color:#64748b;line-height:1.7}
+.li-actions{display:flex;gap:6px;flex-shrink:0;margin-left:10px;flex-wrap:wrap}
+.status{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;display:inline-block;margin-top:4px}
+.s-ativo{background:#14532d;color:#4ade80}
+.s-inativo{background:#44403c;color:#fbbf24}
+.s-manut{background:#7c2d12;color:#fb923c}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#3b82f6;color:#fff;padding:10px 22px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99;white-space:nowrap}
+.toast.show{opacity:1}
+.toast.ok{background:#10b981}
+.toast.err{background:#ef4444}
+.spin-wrap{text-align:center;padding:30px;color:#64748b}
+.spin{display:inline-block;width:24px;height:24px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:30px;color:#475569;font-size:13px}
+.modal-bg{position:fixed;inset:0;background:#000a;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#1e293b;border-radius:14px;width:100%;max-width:480px;border:1px solid #334155;max-height:90vh;overflow-y:auto}
+.modal-hdr{padding:14px 16px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center}
+.modal-hdr h3{font-size:14px;font-weight:700;color:#fff}
+.modal-body{padding:16px}
+.custo-item{background:#0f172a;border-radius:8px;padding:10px 12px;margin-bottom:6px;border:1px solid #1e3a5f;display:flex;justify-content:space-between;align-items:center}
+.custo-item .ci-info p{font-size:12px;color:#64748b}
+.custo-item .ci-val{font-size:14px;font-weight:700;color:#f59e0b}
+.diario-item{background:#0f172a;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #1e3a5f}
+.diario-item .di-data{font-size:11px;color:#3b82f6;font-weight:700;margin-bottom:6px}
+.diario-item .di-desc{font-size:13px;color:#e2e8f0;line-height:1.6;margin-bottom:8px}
+.diario-item .di-foto{width:100%;border-radius:8px;margin-top:8px;max-height:200px;object-fit:cover}
+.tab-inner{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.itab{padding:7px 14px;border:1px solid #334155;border-radius:8px;background:#0f172a;font-size:12px;font-weight:700;color:#64748b;cursor:pointer}
+.itab.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+option{background:#1e293b;color:#e2e8f0}
+.cc-box{background:#0f172a;border-radius:10px;padding:14px;border:1px solid #334155;margin-bottom:12px}
+.cc-box h4{font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
+.cc-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1e293b}
+.cc-row:last-child{border-bottom:none}
+.cc-row span{font-size:12px;color:#94a3b8}
+.cc-row strong{font-size:13px;font-weight:700;color:#f59e0b}
+.cc-total{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#1e3a5f;border-radius:8px;margin-top:10px}
+.cc-total span{font-size:13px;font-weight:700;color:#60a5fa}
+.cc-total strong{font-size:16px;font-weight:700;color:#fff}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🏗</div>
+    <h1>Gestão de Obras</h1>
+    <p>Entre com sua conta para acessar</p>
+    <input class="inp" type="email" id="l-email" placeholder="E-mail">
+    <input class="inp" type="password" id="l-senha" placeholder="Senha">
+    <button class="btn-login" onclick="fazerLogin()">Entrar</button>
+    <div class="login-err" id="l-err"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:20px">🏗</span>
+      <h1>Gestão de Obras</h1>
+      <span class="badge-sup">SUPERVISOR</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:11px;color:#64748b" id="user-info"></span>
+      <button class="btn-logout" onclick="fazerLogout()">Sair</button>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="showMod('dashboard')">📊 Dashboard</button>
+    <button class="nav-btn" onclick="showMod('obras')">🏗 Obras</button>
+    <button class="nav-btn" onclick="showMod('funcionarios')">👷 Equipe</button>
+    <button class="nav-btn" onclick="showMod('veiculos')">🚛 Veículos</button>
+    <button class="nav-btn" onclick="showMod('maquinas')">⚙️ Máquinas</button>
+    <button class="nav-btn" onclick="showMod('abastecimento')">⛽ Abastecimento</button>
+  </div>
+  <div class="content" id="content"></div>
+</div>
+
+<!-- MODAL EDITAR HORIMETRO -->
+<div class="modal-bg" id="modal-hor" style="display:none">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3>Atualizar Horímetro</h3>
+      <button onclick="fecharModal('modal-hor')" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Horímetro atual (h)</label><input type="number" id="hor-val" placeholder="0" inputmode="numeric"></div>
+      <div class="field"><label>Próxima manutenção (h)</label><input type="number" id="hor-prox" placeholder="0" inputmode="numeric"></div>
+      <input type="hidden" id="hor-id">
+      <button class="btn btn-green" style="width:100%" onclick="salvarHorimetro()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CENTRO DE CUSTO / DIÁRIO DE OBRA -->
+<div class="modal-bg" id="modal-obra" style="display:none">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-hdr">
+      <h3 id="modal-obra-titulo">Obra</h3>
+      <button onclick="fecharModal('modal-obra')" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="tab-inner">
+        <button class="itab active" onclick="showObraTab('custos',this)">💰 Centro de Custo</button>
+        <button class="itab" onclick="showObraTab('diario',this)">📋 Diário de Obra</button>
+        <button class="itab" onclick="showObraTab('add-custo',this)">+ Lançar Custo</button>
+        <button class="itab" onclick="showObraTab('add-diario',this)">+ Novo Registro</button>
+      </div>
+      <div id="obra-tab-content"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc,
+  query, orderBy, where, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDw8gbZsMwdofq7NrLEVvWd0qAuVp2Jip4",
+  authDomain: "gestao-8149c.firebaseapp.com",
+  projectId: "gestao-8149c",
+  storageBucket: "gestao-8149c.firebasestorage.app",
+  messagingSenderId: "771236890796",
+  appId: "1:771236890796:web:2341c3e498eb9fe23b7709"
+};
+
+const fireApp = initializeApp(firebaseConfig);
+const auth = getAuth(fireApp);
+const db = getFirestore(fireApp);
+
+let userAtual = null;
+let obraAtualId = null;
+let obraAtualNome = null;
+
+function fmt(n){return 'R$ '+parseFloat(n||0).toFixed(2).replace('.',',');}
+function toast(msg,t=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast '+(t?t+' ':'')+'show';
+  setTimeout(()=>el.classList.remove('show'),2500);
+}
+function spin(){return`<div class="spin-wrap"><div class="spin"></div><br><br>Carregando...</div>`;}
+function empty(m){return`<div class="empty">📭 ${m}</div>`;}
+
+// ── AUTH ──
+window.fazerLogin = async function(){
+  const email=document.getElementById('l-email').value;
+  const senha=document.getElementById('l-senha').value;
+  document.getElementById('l-err').textContent='';
+  try{ await signInWithEmailAndPassword(auth,email,senha); }
+  catch(e){ document.getElementById('l-err').textContent='E-mail ou senha incorretos.'; }
+};
+window.fazerLogout = async function(){ await signOut(auth); };
+
+onAuthStateChanged(auth, user=>{
+  if(user){
+    userAtual=user;
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('user-info').textContent=user.email;
+    showMod('dashboard');
+  } else {
+    userAtual=null;
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('app').classList.remove('visible');
+  }
+});
+
+// ── NAV ──
+window.showMod = function(mod){
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>{
+    b.classList.remove('active');
+    if(['dashboard','obras','funcionarios','veiculos','maquinas','abastecimento'][i]===mod) b.classList.add('active');
+  });
+  ({dashboard:renderDashboard,obras:renderObras,funcionarios:renderFuncionarios,
+    veiculos:renderVeiculos,maquinas:renderMaquinas,abastecimento:renderAbastecimento})[mod]?.();
+};
+
+window.fecharModal = function(id){ document.getElementById(id).style.display='none'; };
+
+// ── DASHBOARD ──
+async function renderDashboard(){
+  const ct=document.getElementById('content');
+  ct.innerHTML=spin();
+  try{
+    const [obras,funcs,veics,maq,abast]=await Promise.all([
+      getDocs(collection(db,'obras')),
+      getDocs(collection(db,'funcionarios')),
+      getDocs(collection(db,'veiculos')),
+      getDocs(collection(db,'maquinas')),
+      getDocs(collection(db,'abastecimentos'))
+    ]);
+    const obrasAtivas=obras.docs.filter(d=>d.data().status==='ativo').length;
+    const totalLitros=abast.docs.reduce((a,d)=>a+(parseFloat(d.data().litros)||0),0);
+    const totalCombust=abast.docs.reduce((a,d)=>a+(parseFloat(d.data().total)||0),0);
+    const manutPend=maq.docs.filter(d=>d.data().manutencao_pendente).length;
+
+    ct.innerHTML=`
+      <div style="font-size:12px;color:#64748b;margin-bottom:12px">
+        ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="lbl">Obras ativas</div><div class="val">${obrasAtivas}</div><div class="sub">de ${obras.size} total</div></div>
+        <div class="kpi"><div class="lbl">Equipe</div><div class="val">${funcs.docs.filter(d=>d.data().ativo).length}</div><div class="sub">ativos</div></div>
+        <div class="kpi"><div class="lbl">Combustível</div><div class="val">${totalLitros.toFixed(0)}L</div><div class="sub">${fmt(totalCombust)}</div></div>
+        <div class="kpi"><div class="lbl">Manutenções</div><div class="val" style="color:${manutPend>0?'#f87171':'#4ade80'}">${manutPend}</div><div class="sub">pendentes</div></div>
+      </div>
+      <div class="section">
+        <div class="section-hdr"><h2>🏗 Obras</h2><button class="btn btn-blue btn-sm" onclick="showMod('obras')">Ver todas</button></div>
+        <div class="section-body">
+          ${obras.size===0?empty('Nenhuma obra'):obras.docs.map(d=>{
+            const o=d.data();
+            return`<div class="list-item">
+              <div class="li-info"><h3>${o.nome}</h3><p>${o.tipo||'—'} · ${o.local||'—'}</p>
+              <span class="status ${o.status==='ativo'?'s-ativo':'s-inativo'}">${o.status==='ativo'?'Ativa':'Inativa'}</span></div>
+              <button class="btn btn-orange btn-sm" onclick="abrirObra('${d.id}','${o.nome.replace(/'/g,"\\'")}')">Ver obra</button>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }catch(e){ document.getElementById('content').innerHTML=`<div class="empty">Erro: ${e.message}</div>`; }
+}
+
+// ── OBRAS ──
+async function renderObras(){
+  const ct=document.getElementById('content');
+  ct.innerHTML=spin();
+  const snap=await getDocs(query(collection(db,'obras'),orderBy('criadoEm','desc')));
+  ct.innerHTML=`
+    <div class="section">
+      <div class="section-hdr"><h2>🏗 Cadastro de Obras</h2></div>
+      <div class="section-body">
+        <div class="row2">
+          <div class="field"><label>Nome da obra</label><input id="o-nome" placeholder="Ex: Recape Praça STA"></div>
+          <div class="field"><label>Tipo de serviço</label>
+            <select id="o-tipo"><option value="">Selecione...</option>
+              <option>Recapeamento</option><option>Tapa-buraco</option>
+              <option>Terraplanagem</option><option>Múltiplos serviços</option>
+            </select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Localização</label><input id="o-local" placeholder="Bairro, cidade"></div>
+          <div class="field"><label>Responsável</label><input id="o-resp" placeholder="Encarregado"></div>
+        </div>
+        <div class="field"><label>Observação</label><textarea id="o-obs" placeholder="Detalhes..."></textarea></div>
+        <button class="btn btn-green" onclick="salvarObra()">+ Cadastrar obra</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-hdr"><h2>Lista de obras (${snap.size})</h2></div>
+      <div class="section-body">
+        ${snap.size===0?empty('Nenhuma obra cadastrada'):snap.docs.map(d=>{
+          const o=d.data();
+          return`<div class="list-item">
+            <div class="li-info"><h3>${o.nome}</h3>
+              <p>${o.tipo||'—'} · ${o.local||'—'}<br>Resp: ${o.resp||'—'}</p>
+              <span class="status ${o.status==='ativo'?'s-ativo':'s-inativo'}">${o.status==='ativo'?'Ativa':'Inativa'}</span>
+            </div>
+            <div class="li-actions">
+              <button class="btn btn-orange btn-sm" onclick="abrirObra('${d.id}','${o.nome.replace(/'/g,"\\'")}')">📋 Ver</button>
+              <button class="btn btn-gray btn-sm" onclick="toggleObra('${d.id}','${o.status}')">${o.status==='ativo'?'Desativar':'Ativar'}</button>
+              <button class="btn btn-red btn-sm" onclick="deletarDoc('obras','${d.id}','obras')">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+window.salvarObra=async function(){
+  const nome=document.getElementById('o-nome').value.trim();
+  if(!nome){toast('Informe o nome','err');return;}
+  await addDoc(collection(db,'obras'),{
+    nome,tipo:document.getElementById('o-tipo').value,
+    local:document.getElementById('o-local').value,
+    resp:document.getElementById('o-resp').value,
+    obs:document.getElementById('o-obs').value,
+    status:'ativo',criadoEm:serverTimestamp()
+  });
+  toast('Obra cadastrada ✓','ok');renderObras();
+};
+window.toggleObra=async function(id,status){
+  await updateDoc(doc(db,'obras',id),{status:status==='ativo'?'inativo':'ativo'});
+  toast('Atualizado ✓','ok');renderObras();
+};
+
+// ── MODAL OBRA — CENTRO DE CUSTO + DIÁRIO ──
+window.abrirObra=function(id,nome){
+  obraAtualId=id; obraAtualNome=nome;
+  document.getElementById('modal-obra-titulo').textContent='🏗 '+nome;
+  document.getElementById('modal-obra').style.display='flex';
+  showObraTab('custos',document.querySelector('.itab'));
+};
+
+window.showObraTab=async function(tab,el){
+  document.querySelectorAll('.itab').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const ct=document.getElementById('obra-tab-content');
+
+  if(tab==='custos'){
+    ct.innerHTML=spin();
+    const [custos,abasts]=await Promise.all([
+      getDocs(query(collection(db,'custos'),where('obraId','==',obraAtualId))),
+      getDocs(query(collection(db,'abastecimentos'),where('obraId','==',obraAtualId)))
+    ]);
+    let totalMaq=0,totalComb=0,totalEquipe=0,totalOutros=0;
+    custos.docs.forEach(d=>{
+      const c=d.data();
+      if(c.tipo==='Locação de máquina') totalMaq+=parseFloat(c.valor)||0;
+      else if(c.tipo==='Custo de equipe') totalEquipe+=parseFloat(c.valor)||0;
+      else totalOutros+=parseFloat(c.valor)||0;
+    });
+    abasts.docs.forEach(d=>{ totalComb+=parseFloat(d.data().total)||0; });
+    const totalGeral=totalMaq+totalComb+totalEquipe+totalOutros;
+
+    ct.innerHTML=`
+      <div class="cc-box">
+        <h4>Resumo de custos</h4>
+        <div class="cc-row"><span>🔧 Locação de máquinas</span><strong>${fmt(totalMaq)}</strong></div>
+        <div class="cc-row"><span>⛽ Combustível</span><strong>${fmt(totalComb)}</strong></div>
+        <div class="cc-row"><span>👷 Equipe</span><strong>${fmt(totalEquipe)}</strong></div>
+        <div class="cc-row"><span>📦 Outros</span><strong>${fmt(totalOutros)}</strong></div>
+        <div class="cc-total"><span>TOTAL GERAL</span><strong>${fmt(totalGeral)}</strong></div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Lançamentos</div>
+      ${custos.size===0?empty('Nenhum custo lançado'):custos.docs.map(d=>{
+        const c=d.data();
+        return`<div class="custo-item">
+          <div class="ci-info"><h3 style="font-size:13px;font-weight:700;color:#fff">${c.tipo}</h3>
+            <p>${c.descricao||'—'} · ${c.data||'—'}</p></div>
+          <div style="text-align:right">
+            <div class="ci-val">${fmt(c.valor)}</div>
+            <button class="btn btn-red btn-sm" style="margin-top:4px" onclick="deletarDoc('custos','${d.id}',null)">✕</button>
+          </div>
+        </div>`;
+      }).join('')}`;
+
+  } else if(tab==='diario'){
+    ct.innerHTML=spin();
+    const snap=await getDocs(query(collection(db,'diario'),where('obraId','==',obraAtualId),orderBy('data','desc')));
+    ct.innerHTML=snap.size===0?empty('Nenhum registro no diário'):snap.docs.map(d=>{
+      const r=d.data();
+      return`<div class="diario-item">
+        <div class="di-data">📅 ${r.data||'—'} · ${r.clima||''}</div>
+        <div class="di-desc">${r.descricao||'—'}</div>
+        ${r.equipe?`<p style="font-size:11px;color:#64748b">👷 Equipe: ${r.equipe}</p>`:''}
+        ${r.maquinas?`<p style="font-size:11px;color:#64748b">⚙️ Máquinas: ${r.maquinas}</p>`:''}
+        ${r.fotoBase64?`<img src="${r.fotoBase64}" class="di-foto">`:''}
+        <button class="btn btn-red btn-sm" style="margin-top:8px" onclick="deletarDoc('diario','${d.id}',null)">✕ Remover</button>
+      </div>`;
+    }).join('');
+
+  } else if(tab==='add-custo'){
+    ct.innerHTML=`
+      <div class="field"><label>Tipo de custo</label>
+        <select id="c-tipo">
+          <option value="">Selecione...</option>
+          <option>Locação de máquina</option>
+          <option>Combustível</option>
+          <option>Custo de equipe</option>
+          <option>Material</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="field"><label>Descrição</label><input id="c-desc" placeholder="Ex: Rolo compactador — 8h"></div>
+      <div class="row2">
+        <div class="field"><label>Valor (R$)</label><input id="c-valor" type="number" placeholder="0,00" step="0.01" inputmode="decimal"></div>
+        <div class="field"><label>Data</label><input id="c-data" type="date"></div>
+      </div>
+      <button class="btn btn-green" style="width:100%" onclick="salvarCusto()">+ Lançar custo</button>`;
+    document.getElementById('c-data').value=new Date().toISOString().split('T')[0];
+
+  } else if(tab==='add-diario'){
+    ct.innerHTML=`
+      <div class="row2">
+        <div class="field"><label>Data</label><input id="d-data" type="date"></div>
+        <div class="field"><label>Clima</label>
+          <select id="d-clima">
+            <option>☀️ Sol</option><option>⛅ Nublado</option>
+            <option>🌧️ Chuva</option><option>🌦️ Parcialmente nublado</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Descrição do serviço executado</label>
+        <textarea id="d-desc" placeholder="Descreva o que foi feito hoje na obra..."></textarea>
+      </div>
+      <div class="field"><label>Equipe presente</label><input id="d-equipe" placeholder="Ex: 8 ajudantes, 2 rasteleiros"></div>
+      <div class="field"><label>Máquinas utilizadas</label><input id="d-maq" placeholder="Ex: Rolo compactador, motoniveladora"></div>
+      <div class="field"><label>Foto do serviço</label><input type="file" id="d-foto" accept="image/*" style="font-size:13px;color:#e2e8f0"></div>
+      <button class="btn btn-green" style="width:100%;margin-top:8px" onclick="salvarDiario()">+ Salvar registro</button>`;
+    document.getElementById('d-data').value=new Date().toISOString().split('T')[0];
+  }
+};
+
+window.salvarCusto=async function(){
+  const tipo=document.getElementById('c-tipo').value;
+  const valor=parseFloat(document.getElementById('c-valor').value)||0;
+  if(!tipo||!valor){toast('Preencha tipo e valor','err');return;}
+  await addDoc(collection(db,'custos'),{
+    obraId:obraAtualId,obraNome:obraAtualNome,
+    tipo,descricao:document.getElementById('c-desc').value,
+    valor,data:document.getElementById('c-data').value,
+    criadoEm:serverTimestamp()
+  });
+  toast('Custo lançado ✓','ok');
+  showObraTab('custos',null);
+};
+
+window.salvarDiario=async function(){
+  const desc=document.getElementById('d-desc').value.trim();
+  if(!desc){toast('Informe a descrição','err');return;}
+  const fotoEl=document.getElementById('d-foto');
+  let fotoBase64='';
+  if(fotoEl.files[0]){
+    fotoBase64=await new Promise(res=>{
+      const r=new FileReader();
+      r.onload=e=>res(e.target.result);
+      r.readAsDataURL(fotoEl.files[0]);
+    });
+  }
+  await addDoc(collection(db,'diario'),{
+    obraId:obraAtualId,obraNome:obraAtualNome,
+    data:document.getElementById('d-data').value,
+    clima:document.getElementById('d-clima').value,
+    descricao:desc,
+    equipe:document.getElementById('d-equipe').value,
+    maquinas:document.getElementById('d-maq').value,
+    fotoBase64,criadoEm:serverTimestamp()
+  });
+  toast('Registro salvo ✓','ok');
+  showObraTab('diario',null);
+};
+
+// ── FUNCIONÁRIOS ──
+async function renderFuncionarios(){
+  const ct=document.getElementById('content');
+  ct.innerHTML=spin();
+  const snap=await getDocs(query(collection(db,'funcionarios'),orderBy('nome')));
+  ct.innerHTML=`
+    <div class="section">
+      <div class="section-hdr"><h2>👷 Cadastro de Funcionários</h2></div>
+      <div class="section-body">
+        <div class="row2">
+          <div class="field"><label>Nome completo</label><input id="f-nome" placeholder="Nome"></div>
+          <div class="field"><label>Função</label>
+            <select id="f-func"><option value="">Selecione...</option>
+              <option>Ajudante</option><option>Rasteleiro</option><option>Operador</option>
+              <option>Motorista</option><option>Encarregado</option><option>Apontador</option><option>Engenheiro</option>
+            </select>
+          </div>
+        </div>
+        <div class="row3">
+          <div class="field"><label>Diária (R$)</label><input id="f-diaria" type="number" placeholder="0,00" step="0.01" inputmode="decimal"></div>
+          <div class="field"><label>Chave PIX</label><input id="f-pix" placeholder="CPF, tel..."></div>
+          <div class="field"><label>Banco</label><input id="f-banco" placeholder="Ex: Inter"></div>
+        </div>
+        <button class="btn btn-green" onclick="salvarFuncionario()">+ Cadastrar</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-hdr"><h2>Lista (${snap.size})</h2></div>
+      <div class="section-body">
+        ${snap.size===0?empty('Nenhum funcionário'):snap.docs.map(d=>{
+          const f=d.data();
+          return`<div class="list-item">
+            <div class="li-info"><h3>${f.nome}</h3>
+              <p>${f.funcao||'—'} · R$ ${(f.diaria||0).toFixed(2).replace('.',',')}/dia</p>
+              <p>PIX: ${f.pix||'—'} · ${f.banco||'—'}</p>
+              <span class="status ${f.ativo?'s-ativo':'s-inativo'}">${f.ativo?'Ativo':'Inativo'}</span>
+            </div>
+            <div class="li-actions">
+              <button class="btn btn-gray btn-sm" onclick="toggleFunc('${d.id}',${f.ativo})">${f.ativo?'Desativar':'Ativar'}</button>
+              <button class="btn btn-red btn-sm" onclick="deletarDoc('funcionarios','${d.id}','funcionarios')">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+window.salvarFuncionario=async function(){
+  const nome=document.getElementById('f-nome').value.trim();
+  if(!nome){toast('Informe o nome','err');return;}
+  await addDoc(collection(db,'funcionarios'),{
+    nome,funcao:document.getElementById('f-func').value,
+    diaria:parseFloat(document.getElementById('f-diaria').value)||0,
+    pix:document.getElementById('f-pix').value,
+    banco:document.getElementById('f-banco').value,
+    ativo:true,criadoEm:serverTimestamp()
+  });
+  toast('Cadastrado ✓','ok');renderFuncionarios();
+};
+window.toggleFunc=async function(id,ativo){
+  await updateDoc(doc(db,'funcionarios',id),{ativo:!ativo});
+  toast('Atualizado ✓','ok');renderFuncionarios();
+};
+
+// ── VEÍCULOS ──
+async function renderVeiculos(){
+  const ct=document.getElementById('content');
+  ct.innerHTML=spin();
+  const [snap,obras,funcs]=await Promise.all([
+    getDocs(query(collection(db,'veiculos'),orderBy('placa'))),
+    getDocs(collection(db,'obras')),
+    getDocs(query(collection(db,'funcionarios'),orderBy('nome')))
+  ]);
+  const opObras=obras.docs.map(d=>`<option value="${d.data().nome}">${d.data().nome}</option>`).join('');
+  const opFuncs=funcs.docs.map(d=>`<option value="${d.data().nome}">${d.data().nome}</option>`).join('');
+  ct.innerHTML=`
+    <div class="section">
+      <div class="section-hdr"><h2>🚛 Cadastro de Veículos</h2></div>
+      <div class="section-body">
+        <div class="row3">
+          <div class="field"><label>Placa</label><input id="v-placa" placeholder="ABC-1234" style="text-transform:uppercase"></div>
+          <div class="field"><label>Modelo</label><input id="v-modelo" placeholder="Ex: Mercedes"></div>
+          <div class="field"><label>Tipo</label>
+            <select id="v-tipo"><option value="">Selecione...</option>
+              <option>Caminhão caçamba</option><option>Caminhão pipa</option>
+              <option>Caminhonete</option><option>Van</option><option>Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="row3">
+          <div class="field"><label>Motorista</label>
+            <select id="v-motorista"><option value="">Selecione...</option>${opFuncs}</select>
+          </div>
+          <div class="field"><label>KM atual</label><input id="v-km" type="number" placeholder="0" inputmode="numeric"></div>
+          <div class="field"><label>Obra vinculada</label>
+            <select id="v-obra"><option value="">Selecione...</option>${opObras}</select>
+          </div>
+        </div>
+        <button class="btn btn-green" onclick="salvarVeiculo()">+ Cadastrar</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-hdr"><h2>Lista (${snap.size})</h2></div>
+      <div class="section-body">
+        ${snap.size===0?empty('Nenhum veículo'):snap.docs.map(d=>{
+          const v=d.data();
+          return`<div class="list-item">
+            <div class="li-info"><h3>${v.placa} — ${v.modelo||'—'}</h3>
+              <p>${v.tipo||'—'} · Motorista: ${v.motorista||'—'}</p>
+              <p>KM: ${v.km||0} · Obra: ${v.obra||'—'}</p>
+              <span class="status s-ativo">Ativo</span>
+            </div>
+            <div class="li-actions">
+              <button class="btn btn-red btn-sm" onclick="deletarDoc('veiculos','${d.id}','veiculos')">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+window.salvarVeiculo=async function(){
+  const placa=document.getElementById('v-placa').value.trim().toUpperCase();
+  if(!placa){toast('Informe a placa','err');return;}
+  await addDoc(collection(db,'veiculos'),{
+    placa,modelo:document.getElementById('v-modelo').value,
+    tipo:document.getElementById('v-tipo').value,
+    motorista:document.getElementById('v-motorista').value,
+    km:parseInt(document.getElementById('v-km').value)||0,
+    obra:document.getElementById('v-obra').value,
+    status:'ativo',criadoEm:serverTimestamp()
+  });
+  toast('Cadastrado ✓','ok');renderVeiculos();
+};
+
+// ── MÁQUINAS ──
+async function renderMaquinas(){
+  const ct=document.getElementById('content');
+  ct.innerHTML=spin();
+  const [snap,obras,funcs]=await Promise.all([
+    getDocs(query(collection(db,'maquinas'),orderBy('nome'))),
+    getDocs(collection(db,'obras')),
+    getDocs(query(collection(db,'funcionarios'),orderBy('nome')))
+  ]);
+  const opObras=obras.docs.map(d=>`<option value="${d.data().nome}">${d.data().nome}</option>`).join('');
+  const opFuncs=funcs.docs.map(d=>`<option value="${d.data().nome}">${d.data().nome}</option>`).join('');
+  ct.innerHTML=`
+    <div class="section">
+      <div class="section-hdr"><h2>⚙️ Cadastro de Máquinas</h2></div>
+      <div class="section-body">
+        <div class="row2">
+          <div class="field"><label>Nome / Identificação</label><input id="m-nome" placeholder="Ex: Rolo compactador 01"></div>
+          <div class="field"><label>Tipo</label>
+            <select id="m-tipo"><option value="">Selecione...</option>
+              <option>Rolo compactador</option><option>Motoniveladora</option>
+              <option>Escavadeira</option><option>Pá carregadeira</option>
+              <option>Vibroacabadora</option><option>Caminhão munck</option><option>Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="row3">
+          <div class="field"><label>Operador responsável</label>
+            <select id="m-op"><option value="">Selecione...</option>${opFuncs}</select>
+          </div>
+          <div class="field"><label>Horímetro atual (h)</label><input id="m-hor" type="number" placeholder="0" inputmode="numeric"></div>
+          <div class="field"><label>Próxima manutenção (h)</label><input id="m-prox" type="number" placeholder="0" inputmode="numeric"></div>
+        </div>
+        <div class="field"><label>Obra vinculada</label>
+          <select id="m-obra"><option value="">Selecione...</option>${opObras}</select>
+        </div>
+        <button class="btn btn-green" onclick="salvarMaquina()">+ Cadastrar</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-hdr"><h2>Lista (${snap.size})</h2></div>
+      <div class="section-body">
+        ${snap.size===0?empty('Nenhuma máquina'):snap.docs.map(d=>{
+          const m=d.data();
+          const pend=m.prox_manutencao&&m.horimetro>=m.prox_manutencao;
+          return`<div class="list-item">
+            <div class="li-info"><h3>${m.nome}</h3>
+              <p>${m.tipo||'—'} · Op: ${m.operador||'—'}</p>
+              <p>Horímetro: <strong style="color:#f59e0b">${m.horimetro||0}h</strong> · Próx: ${m.prox_manutencao||'—'}h</p>
+              <p>Obra: ${m.obra||'—'}</p>
+              <span class="status ${pend?'s-manut':'s-ativo'}">${pend?'⚠ Manutenção pendente':'OK'}</span>
+            </div>
+            <div class="li-actions">
+              <button class="btn btn-orange btn-sm" onclick="abrirHorimetro('${d.id}',${m.horimetro||0},${m.prox_manutencao||0})">Horímetro</button>
+              <button class="btn btn-red btn-sm" onclick="deletarDoc('maquinas','${d.id}','maquinas')">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+window.salvarMaquina=async function(){
+  const nome=document.getElementById('m-nome').value.trim();
+  if(!nome){toast('Informe o nome','err');return;}
+  const hor=parseInt(document.getElementById('m-hor').value)||0;
+  const prox=parseInt(document.getElementById('m-prox').value)||0;
+  await addDoc(collection(db,'maquinas'),{
+    nome,tipo:document.getElementById('m-tipo').value,
+    operador:document.getElementById('m-op').value,
+    horimetro:hor,prox_manutencao:prox,
+    obra:document.getElementById('m-obra').value,
+    manutencao_pendente:prox>0&&hor>=prox,
+    status:'ativo',criadoEm:serverTimestamp()
+  });
+  toast('Cadastrado ✓','ok');renderMaquinas();
+};
+
+window.abrirHorimetro=function(id,hor,prox){
+  document.getElementById('hor-id').value=id;
+  document.getElementById('hor-val').value=hor;
+  document.getElementById('hor-prox').value=prox;
+  document.getElementById('modal-hor').style.display='flex';
+};
+window.salvarHorimetro=async function(){
+  const id=document.getElementById('hor-id').value;
+  const hor=parseInt(document.getElementById('hor-val').value)||0;
+  const prox=parseInt(document.getElementById('hor-prox').value)||0;
+  await updateDoc(doc(db,'maquinas',id),{
+    horimetro:hor,prox_manutencao:prox,
+    manutencao_pendente:prox>0&&hor>=prox
+  });
+  toast('Horímetro atualizado ✓','ok');
+  fecharModal('modal-hor');renderMaquinas();
+};
+
+// ── ABASTECIMENTO ──
+async function renderAbastecimento(){
+  const ct=document.getElementById('content');
+  ct.innerHTML=spin();
+  const [snap,veics,maqSnap,obras]=await Promise.all([
+    getDocs(query(collection(db,'abastecimentos'),orderBy('criadoEm','desc'))),
+    getDocs(collection(db,'veiculos')),
+    getDocs(collection(db,'maquinas')),
+    getDocs(collection(db,'obras'))
+  ]);
+  const opVeics=[...veics.docs.map(d=>`<option value="${d.data().placa}">${d.data().placa} — ${d.data().modelo||''}</option>`),
+    ...maqSnap.docs.map(d=>`<option value="${d.data().nome}">${d.data().nome}</option>`)].join('');
+  const opObras=obras.docs.map(d=>`<option value="${d.id}|${d.data().nome}">${d.data().nome}</option>`).join('');
+  const totalLitros=snap.docs.reduce((a,d)=>a+(parseFloat(d.data().litros)||0),0);
+  const totalReais=snap.docs.reduce((a,d)=>a+(parseFloat(d.data().total)||0),0);
+
+  ct.innerHTML=`
+    <div class="kpi-grid">
+      <div class="kpi"><div class="lbl">Total litros</div><div class="val">${totalLitros.toFixed(0)}L</div></div>
+      <div class="kpi"><div class="lbl">Total gasto</div><div class="val" style="font-size:16px">${fmt(totalReais)}</div></div>
+      <div class="kpi"><div class="lbl">Registros</div><div class="val">${snap.size}</div></div>
+    </div>
+    <div class="section">
+      <div class="section-hdr"><h2>⛽ Novo abastecimento</h2></div>
+      <div class="section-body">
+        <div class="row2">
+          <div class="field"><label>Veículo / Máquina</label>
+            <select id="a-vei"><option value="">Selecione...</option>${opVeics}</select>
+          </div>
+          <div class="field"><label>Obra</label>
+            <select id="a-obra"><option value="">Selecione...</option>${opObras}</select>
+          </div>
+        </div>
+        <div class="row3">
+          <div class="field"><label>Data</label><input id="a-data" type="date"></div>
+          <div class="field"><label>Litros</label><input id="a-litros" type="number" placeholder="0,00" step="0.01" inputmode="decimal" oninput="calcAbast()"></div>
+          <div class="field"><label>Preço/litro (R$)</label><input id="a-preco" type="number" placeholder="0,00" step="0.01" inputmode="decimal" oninput="calcAbast()"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>KM / Horímetro</label><input id="a-km" type="number" placeholder="0" inputmode="numeric"></div>
+          <div class="field"><label>Total (R$)</label>
+            <input id="a-total" type="number" placeholder="0,00" step="0.01" inputmode="decimal" style="color:#f59e0b;font-weight:700">
+          </div>
+        </div>
+        <div class="field"><label>Observação</label><input id="a-obs" placeholder="Ex: Abastecimento canteiro"></div>
+        <button class="btn btn-green" onclick="salvarAbastecimento()">+ Registrar abastecimento</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-hdr"><h2>Histórico (${snap.size})</h2></div>
+      <div class="section-body">
+        ${snap.size===0?empty('Nenhum abastecimento'):snap.docs.map(d=>{
+          const a=d.data();
+          return`<div class="list-item">
+            <div class="li-info"><h3>${a.veiculo}</h3>
+              <p>${a.data||'—'} · ${a.obraNome||'—'}</p>
+              <p>${a.litros||0}L · R$ ${(a.preco||0).toFixed(2).replace('.',',')}/L · KM/Hor: ${a.km||0}</p>
+              ${a.obs?`<p>${a.obs}</p>`:''}
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:15px;font-weight:700;color:#f59e0b">${fmt(a.total)}</div>
+              <button class="btn btn-red btn-sm" style="margin-top:6px" onclick="deletarDoc('abastecimentos','${d.id}','abastecimento')">✕</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  document.getElementById('a-data').value=new Date().toISOString().split('T')[0];
+}
+
+window.calcAbast=function(){
+  const l=parseFloat(document.getElementById('a-litros').value)||0;
+  const p=parseFloat(document.getElementById('a-preco').value)||0;
+  if(l&&p) document.getElementById('a-total').value=(l*p).toFixed(2);
+};
+
+window.salvarAbastecimento=async function(){
+  const vei=document.getElementById('a-vei').value;
+  const litros=parseFloat(document.getElementById('a-litros').value)||0;
+  if(!vei||!litros){toast('Informe veículo e litros','err');return;}
+  const obraVal=document.getElementById('a-obra').value;
+  const [obraId,obraNome]=obraVal?obraVal.split('|'):['',''];
+  const total=parseFloat(document.getElementById('a-total').value)||0;
+  await addDoc(collection(db,'abastecimentos'),{
+    veiculo:vei,obraId,obraNome,
+    data:document.getElementById('a-data').value,
+    litros,preco:parseFloat(document.getElementById('a-preco').value)||0,
+    total,km:parseInt(document.getElementById('a-km').value)||0,
+    obs:document.getElementById('a-obs').value,
+    criadoEm:serverTimestamp()
+  });
+  toast('Abastecimento registrado ✓','ok');renderAbastecimento();
+};
+
+// ── DELETAR ──
+window.deletarDoc=async function(col,id,mod){
+  if(!confirm('Confirma exclusão?'))return;
+  await deleteDoc(doc(db,col,id));
+  toast('Removido ✓','ok');
+  if(mod) window.showMod(mod);
+  else { showObraTab('custos',null); }
+};
+</script>
+</body>
+</html>
